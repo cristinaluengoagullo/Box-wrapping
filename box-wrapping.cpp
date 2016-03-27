@@ -30,21 +30,21 @@ public:
     for(int i = 0; i < boxes.size(); i++){
       int width = boxes[i].first;
       int length = boxes[i].second;      
-      rel(*this, ((x_tl[i] >= 0) && (x_tl[i] <= w) && (x_br[i] >= 0) && (x_br[i] <= w)));
+      rel(*this, ((x_tl[i] >= 0) && (x_tl[i] < w) && (x_br[i] >= 0) && (x_br[i] < w)));
       rel(*this,x_tl[i] <= x_br[i]);
       rel(*this,y_tl[i] <= y_br[i]);
       rel(*this,(x_br[i]-x_tl[i]) == (width-1));
       rel(*this,(y_br[i]-y_tl[i]) == (length-1));
       for(int j = 0; j < boxes.size(); j++) {
 	if(i != j) {
-	  rel(*this,!(x_tl[j] >= x_tl[i] && x_tl[j] < x_br[i]) || (y_br[j] <= y_tl[i]) || (y_tl[j] >= y_br[i]));
-	  rel(*this,!(x_br[j] > x_tl[i] && x_br[j] <= x_br[i]) || (y_br[j] <= y_tl[i]) || (y_tl[j] >= y_br[i]));
-	  rel(*this,!(y_tl[j] >= y_tl[i] && y_tl[j] < y_br[i]) || (x_br[j] <= x_tl[i]) || (x_tl[j] >= x_br[i]));
-	  rel(*this,!(y_br[j] > y_tl[i] && y_br[j] <= y_br[i]) || (x_br[j] <= x_tl[i]) || (x_tl[j] >= x_br[i]));
+	  rel(*this,!(x_tl[j] >= x_tl[i] && x_tl[j] <= x_br[i]) || (y_br[j] < y_tl[i]) || (y_tl[j] > y_br[i]));
+	  rel(*this,!(x_br[j] >= x_tl[i] && x_br[j] <= x_br[i]) || (y_br[j] < y_tl[i]) || (y_tl[j] > y_br[i]));
+	  rel(*this,!(y_tl[j] >= y_tl[i] && y_tl[j] < y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
+	  rel(*this,!(y_br[j] > y_tl[i] && y_br[j] <= y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
 	}
       }
     }
-    rel(*this, max(y_br) == length);
+    rel(*this, max(y_br)+1 == length);
     branch(*this, x_tl, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     branch(*this, x_br, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
     branch(*this, y_tl, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
