@@ -22,15 +22,14 @@ public:
 
   BoxWrapping(int w, map<int,pair<int,int> >& boxes) : 
     length(*this,0,10000),
-    x_tl(*this,boxes.size(),0,w), 
-    x_br(*this,boxes.size(),0,w),
-    y_tl(*this,boxes.size(),0,10),
-    y_br(*this,boxes.size(),0,10)
+    x_tl(*this,boxes.size(),0,w-1), 
+    x_br(*this,boxes.size(),0,w-1),
+    y_tl(*this,boxes.size(),0,10000),
+    y_br(*this,boxes.size(),0,10000)
   {
     for(int i = 0; i < boxes.size(); i++){
       int width = boxes[i].first;
       int length = boxes[i].second;      
-      rel(*this, ((x_tl[i] >= 0) && (x_tl[i] < w) && (x_br[i] >= 0) && (x_br[i] < w)));
       rel(*this,x_tl[i] <= x_br[i]);
       rel(*this,y_tl[i] <= y_br[i]);
       rel(*this,(x_br[i]-x_tl[i]) == (width-1));
@@ -39,8 +38,8 @@ public:
 	if(i != j) {
 	  rel(*this,!(x_tl[j] >= x_tl[i] && x_tl[j] <= x_br[i]) || (y_br[j] < y_tl[i]) || (y_tl[j] > y_br[i]));
 	  rel(*this,!(x_br[j] >= x_tl[i] && x_br[j] <= x_br[i]) || (y_br[j] < y_tl[i]) || (y_tl[j] > y_br[i]));
-	  rel(*this,!(y_tl[j] >= y_tl[i] && y_tl[j] < y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
-	  rel(*this,!(y_br[j] > y_tl[i] && y_br[j] <= y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
+	  rel(*this,!(y_tl[j] >= y_tl[i] && y_tl[j] <= y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
+	  rel(*this,!(y_br[j] >= y_tl[i] && y_br[j] <= y_br[i]) || (x_br[j] < x_tl[i]) || (x_tl[j] > x_br[i]));
 	}
       }
     }
@@ -66,7 +65,7 @@ public:
   void print(void) const {
     cout << length.val() << endl;
     for(int i = 0; i < x_tl.size(); i++) {
-      cout << x_tl[i].val() << " " << y_tl[i].val() << "    " << x_br[i].val() << " " << y_br[i].val() << endl;
+    cout << x_tl[i].val() << " " << y_tl[i].val() << "    " << x_br[i].val() << " " << y_br[i].val() << endl;
     }
   }
 
@@ -119,9 +118,10 @@ int main(int argc, char* argv[]) {
   while(s = e.next()) {
     if(s)
       best = s;
-  }
-  if(best) 
+  }    
+  if(best) {
     best->print();
+  }
   delete s;
   delete best;
   return 0;
