@@ -29,11 +29,17 @@ public:
   {
     for(int i = 0; i < boxes.size(); i++){
       int width = boxes[i].first;
-      int length = boxes[i].second;      
+      int height = boxes[i].second;    
+      IntVar bwidth(*this,width,height);
+      IntVar bheight(*this,width,height);
+      rel(*this, bwidth == width || bwidth == height); 
+      rel(*this, bheight == width || bheight == height);
+      if(width != height) 
+	rel(*this,bwidth != bheight);
       rel(*this,x_tl[i] <= x_br[i]);
       rel(*this,y_tl[i] <= y_br[i]);
-      rel(*this,(x_br[i]-x_tl[i]) == (width-1));
-      rel(*this,(y_br[i]-y_tl[i]) == (length-1));
+      rel(*this,(x_br[i]-x_tl[i]) == (bwidth-1));
+      rel(*this,(y_br[i]-y_tl[i]) == (bheight-1));
       for(int j = 0; j < boxes.size(); j++) {
 	if(i != j) {
 	  rel(*this,!(x_tl[j] >= x_tl[i] && x_tl[j] <= x_br[i]) || (y_br[j] < y_tl[i]) || (y_tl[j] > y_br[i]));
