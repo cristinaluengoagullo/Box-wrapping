@@ -42,8 +42,8 @@ public:
       IntVar bheight(*this,dimsSet);
       if(width != height) 
 	rel(*this,bwidth != bheight);
-      rel(*this,x_tl[i] <= x_br[i]);
-      rel(*this,y_tl[i] <= y_br[i]);
+      //rel(*this,x_tl[i] <= x_br[i]);
+      //rel(*this,y_tl[i] <= y_br[i]);
       rel(*this,(x_br[i] == x_tl[i]+bwidth-1));
       rel(*this,(y_br[i] == y_tl[i]+bheight-1));
       for(int j = i+1; j < boxes.size(); j++) {
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
   BoxWrapping* s;
   while(s = e.next()) {
     if(s) {
-      //s->print();
+      s->print();
       best = s;
     }
   }    
