@@ -1,0 +1,22 @@
+#!/bin/bash
+
+TIME_LIMIT=120 # In secs.
+BENCH_DIR=instances
+EXE=./box-wrapping
+CHECKER=./checker
+
+ulimit -t $TIME_LIMIT
+
+for ifile in $BENCH_DIR/*.in; do
+    ofile=$(basename instances/bwp_10_10_1.in .in)_CP.out
+    echo ""
+    echo "------ File $ifile ------"
+    /usr/bin/time -f "%e" $EXE $ifile > out/$ofile
+    if [ $? != 0 ]; then
+	echo "Timed out!"
+    else
+	echo "OK!"
+    fi
+    $CHECKER $ifile out/$ofile
+done
+

@@ -14,6 +14,11 @@ bool compareBoxes(const pair<int,int>& b1, const pair<int,int>& b2) {
 
 class BoxWrapping : public Space {
 
+private:
+
+  vector<pair<int,int> > boxes;
+  int w;
+
 protected:
 
   IntVar length;
@@ -24,12 +29,41 @@ protected:
 
 public:
 
-  BoxWrapping(int w, int maxLength, const vector<pair<int,int> >& boxes) : 
+  int value_aux(IntVar x, int i) const {
+    if(i == 0) {
+      return x.min();
+    }
+    int val = x.min();
+    for (IntVarValues k(x); k( ) ; ++k) {
+      int maxDim = max(boxes[i-1].first,boxes[i-1].second);
+      if(maxDim > w)
+	maxDim = min(boxes[i-1].first,boxes[i-1].second);
+      if(k.val() >= x_tl[i-1].val()+maxDim) {
+	val = k.val();
+	break;
+      }
+    }
+    return val;
+  }
+
+  static int value(const Space& home, IntVar x, int i) {
+    static_cast<const BoxWrapping&>(home).value_aux(x,i);
+  }
+
+  static void commit(Space& home, unsigned int a,
+		IntVar x, int i, int n) {
+    if (a == 0U) rel(home, x, IRT_EQ, n);
+    else         rel(home, x, IRT_NQ, n);
+  }
+
+  BoxWrapping(int _w, int maxLength, const vector<pair<int,int> >& _boxes) : 
     length(*this,0,maxLength),
-    x_tl(*this,boxes.size(),0,w-1), 
-    x_br(*this,boxes.size(),0,w-1),
-    y_tl(*this,boxes.size(),0,maxLength),
-    y_br(*this,boxes.size(),0,maxLength)
+    x_tl(*this,_boxes.size(),0,_w-1), 
+    x_br(*this,_boxes.size(),0,_w-1),
+    y_tl(*this,_boxes.size(),0,maxLength),
+    y_br(*this,_boxes.size(),0,maxLength),
+    w(_w),
+    boxes(_boxes)
   {
     for(int i = 0; i < boxes.size(); i++){
       int width = boxes[i].first;
@@ -42,8 +76,12 @@ public:
       IntVar bheight(*this,dimsSet);
       if(width != height) 
 	rel(*this,bwidth != bheight);
-      //rel(*this,x_tl[i] <= x_br[i]);
-      //rel(*this,y_tl[i] <= y_br[i]);
+      if(i == 0) {
+	rel(*this, x_tl[0] <= 1/2*(w - bwidth));
+      }
+      rel(*this, x_tl[i] <= w-bwidth);
+      rel(*this,x_tl[i] <= x_br[i]);
+      rel(*this,y_tl[i] <= y_br[i]);
       rel(*this,(x_br[i] == x_tl[i]+bwidth-1));
       rel(*this,(y_br[i] == y_tl[i]+bheight-1));
       for(int j = i+1; j < boxes.size(); j++) {
@@ -62,10 +100,9 @@ public:
       }
     }
     rel(*this, max(y_br)+1 == length);
+    branch(*this, x_tl, INT_VAR_NONE(), INT_VAL(&value, &commit));
     branch(*this, y_tl, INT_VAR_NONE(), INT_VAL_MIN());
-    branch(*this, x_tl, INT_VAR_NONE(), INT_VAL_MIN());
     branch(*this, y_br, INT_VAR_NONE(), INT_VAL_MIN());
-    branch(*this, x_br, INT_VAR_NONE(), INT_VAL_MIN());
   }
 
   BoxWrapping(bool share, BoxWrapping& s) : Space(share, s) {
@@ -74,6 +111,8 @@ public:
     x_br.update(*this,share,s.x_br);
     y_tl.update(*this,share,s.y_tl);
     y_br.update(*this,share,s.y_br);
+    boxes = s.boxes;
+    w = s.w;
   }
 
   virtual Space* copy(bool share) {
@@ -140,7 +179,7 @@ int main(int argc, char* argv[]) {
   BoxWrapping* s;
   while(s = e.next()) {
     if(s) {
-      s->print();
+      //s->print();
       best = s;
     }
   }    
