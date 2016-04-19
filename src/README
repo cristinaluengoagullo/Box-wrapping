@@ -1,0 +1,13 @@
+
+* Compile *
+
+> make
+
+* Execute a single instance *
+
+> ./box-wrapping <infile> <outfile> 
+
+* Execute a set of instances *
+(It is fixed to an instances folder called instances/)
+
+> ./run_script

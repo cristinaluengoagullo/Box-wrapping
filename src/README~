@@ -1,0 +1,8 @@
+
+* Instructions to compile *
+
+> make
+
+* Instructions to execute *
+
+> ./box-wrapping <infile> <outfile> 
