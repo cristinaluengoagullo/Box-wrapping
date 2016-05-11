@@ -86,12 +86,22 @@ int main(int argc, char* argv[]) {
     length = IloMax(y_br)+1;
     model.add(IloMinimize(env,length));
     IloCplex cplex(model);
+    cplex.setOut(env.getNullStream());
     if (cplex.solve()) {
       cout << cplex.getObjValue() << endl;
       for (IloInt i = 0; i < boxes.size(); i++) {
-	cout << cplex.getValue(x_tl[i]) << " " << cplex.getValue(y_tl[i]);
-	cout << "    " << cplex.getValue(x_br[i]) << " " << cplex.getValue(y_br[i]) << endl;
-
+	IloInt xtl = cplex.getValue(x_tl[i]);
+	IloInt ytl = cplex.getValue(y_tl[i]);
+	IloInt xbr = cplex.getValue(x_br[i]);
+	IloInt ybr = cplex.getValue(y_br[i]);
+	if(xtl < 1) cout << "0 ";
+	else cout << xtl << " ";
+	if(ytl < 1) cout << "0    ";
+	else cout << ytl << "    ";
+	if(xbr < 1) cout << "0 ";
+	else cout << xbr << " ";
+	if(ybr < 1) cout << "0 " << endl;
+	else cout << ybr << " " << endl;	
       }
     }
     else {
