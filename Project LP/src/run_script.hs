@@ -6,7 +6,7 @@ CHECKER=./../../checker
 EXE=./boxwrapping
 
 for ifile in $BENCH_DIR/*.in; do
-    ofile=$(basename $ifile .in)_CP.out
+    ofile=$(basename $ifile .in)_LP.out
     echo ""
     echo "------ File $ifile ------"
     timeout 120s $EXE $ifile > ../out/$ofile
@@ -17,4 +17,3 @@ for ifile in $BENCH_DIR/*.in; do
     fi
     $CHECKER $ifile ../out/$ofile
 done
-
