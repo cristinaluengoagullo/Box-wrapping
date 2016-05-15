@@ -1,9 +1,9 @@
 #!/bin/bash
 
 TIME_LIMIT=120 # In secs.
-BENCH_DIR=instances
+BENCH_DIR=../../instances
 EXE=./box-wrapping
-CHECKER=./checker
+CHECKER=./../../checker
 
 ulimit -t $TIME_LIMIT
 
@@ -11,12 +11,12 @@ for ifile in $BENCH_DIR/*.in; do
     ofile=$(basename $ifile .in)_CP.out
     echo ""
     echo "------ File $ifile ------"
-    /usr/bin/time -f "%e" $EXE $ifile > out/$ofile
+    /usr/bin/time -f "%e" $EXE $ifile > ../out/$ofile
     if [ $? != 0 ]; then
 	echo "Timed out!"
     else
 	echo "OK!"
     fi
-    $CHECKER $ifile out/$ofile
+    $CHECKER $ifile ../out/$ofile
 done
 
