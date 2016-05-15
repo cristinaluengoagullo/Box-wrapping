@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 	int nBoxes = atoi(tokens[0].c_str());
 	for(int j = i; j < nBoxes+i; j++) {
 	  boxes.push_back(make_pair(width,height));
-	  maxLength += height;//max(width,height);
+	  maxLength += max(width,height);
 	}
 	i += nBoxes;
       }
@@ -53,10 +53,15 @@ int main(int argc, char* argv[]) {
   sort(boxes.begin(),boxes.end(),compareBoxes);
   IloEnv env;
   try {
+    // Top-left horizontal coordinate.
     IloNumVarArray x_tl(env,boxes.size(),0,w-1);
+    // Top-left vertical coordinate.
     IloNumVarArray y_tl(env,boxes.size(),0,maxLength-1);
+    // Widths of the boxes.
     IloNumVarArray width(env,boxes.size(),0,w);
+    // Heights of the boxes.
     IloNumVarArray height(env,boxes.size(),0,maxLength-1);
+    // Total length of the paper roll used. 
     IloNumVar length(env,0,maxLength-1);
     IloModel model(env);
     x_tl[0].setBounds(0,0);
@@ -64,17 +69,26 @@ int main(int argc, char* argv[]) {
     for(IloInt i = 0; i < boxes.size(); i++) {
       int boxWidth = boxes[i].first;
       int boxHeight = boxes[i].second;
+      // If a box has different width and height dimensions, the final width of it can either 
+      // be the original width or the original height. The same applies to the height of the box. 
       if(boxWidth != boxHeight) {
 	model.add(width[i] == boxWidth || width[i] == boxHeight);
 	model.add(height[i] == boxHeight || height[i] == boxWidth);
 	model.add(width[i] != height[i]);
       }
+      // If a box has the same width and height, the width and height of the box keep
+      // having their original values.
       else {
 	width[i].setBounds(boxWidth,boxWidth);
 	height[i].setBounds(boxHeight,boxHeight);
       }
+      // The top-left horizontal of a box is at most the total width of the paper minus its width. 
       model.add(x_tl[i]+width[i] <= w);
       for(IloInt j = i+1; j < boxes.size(); j++) {
+	// If two boxes have the same dimensions, one of them bounds the possible values of the coordinates
+	// of the other. Since they have the same dimensions, it makes sense to determine the coordinates of
+	// one based on the other. For instance, if one of the boxes does not fit somewhere, the other one
+	// would not fit there either.
 	if(boxes[j].first == boxes[i].first && boxes[j].second == boxes[i].second) {
 	  model.add((x_tl[j] >= x_tl[i]+width[i]) || (y_tl[j] >= y_tl[i]+height[i]));
 	} 
@@ -82,6 +96,7 @@ int main(int argc, char* argv[]) {
 	else
 	  model.add((x_tl[j]+width[j] <= x_tl[i]) || (x_tl[j] >= x_tl[i]+width[i]) || (y_tl[j]+height[j] <= y_tl[i]) || (y_tl[j] >= y_tl[i]+height[i]));
       }
+      // The length of the paper is equal to the maximum bottom-right coordinate of all boxes. 
       model.add(length >= y_tl[i]+height[i]-1);
     }
     model.add(IloMinimize(env,length));
@@ -90,6 +105,7 @@ int main(int argc, char* argv[]) {
     if (cplex.solve()) {
       cout << cplex.getObjValue()+1 << endl;
       for (IloInt i = 0; i < boxes.size(); i++) {
+	// The final values get rounded up. 
 	IloInt xtl = int(cplex.getValue(x_tl[i])+0.5);
 	IloInt ytl = int(cplex.getValue(y_tl[i])+0.5);
 	IloInt w = int(cplex.getValue(width[i])+0.5);
@@ -100,10 +116,9 @@ int main(int argc, char* argv[]) {
 	else cout << ytl << "    ";
 	if(xtl < 1) cout << w-1 << " ";
 	else cout << xtl+w-1 << " ";
-	if(ytl < 1) cout << h-1 << ""/* -> " << w << "x" << h*/ << endl;	
-	else cout << ytl+h-1 << " "/*-> " << w << "x" << h*/ << endl;	
+	if(ytl < 1) cout << h-1 << endl;	
+	else cout << ytl+h-1 << endl;	
       }
-      //cplex.exportModel("model.lp");
     }
     else {
       cout << " No solution found" << endl;
