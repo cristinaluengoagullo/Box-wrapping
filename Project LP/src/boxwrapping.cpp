@@ -7,7 +7,8 @@
 ILOSTLBEGIN
 
 // Auxiliar function to compare two boxes by size. Used when sorting
-// the input boxes.
+// the input boxes. We sort them in order to find the biggest box and
+// group the boxes that have the same dimensions. 
 bool compareBoxes(const pair<int,int>& b1, const pair<int,int>& b2) {
   return (b1.first*b1.second) > (b2.first*b2.second);
 }
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]) {
     // Total length of the paper roll used. 
     IloNumVar length(env,0,maxLength-1);
     IloModel model(env);
+    // Place the first box (biggest one) in the topmost left coordinate.
     x_tl[0].setBounds(0,0);
     y_tl[0].setBounds(0,0);
     for(IloInt i = 0; i < boxes.size(); i++) {
