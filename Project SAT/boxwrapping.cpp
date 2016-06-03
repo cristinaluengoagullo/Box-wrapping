@@ -34,9 +34,9 @@ literal operator-(const literal& lit) {
 
 
 literal tl(int i, int j, int k) {
-  assert(0 <= i and i < maxLength);
-  assert(0 <= j and j < w);
-  return to_string(i*w + j + k*w*maxLength + 1) + "  ";
+  assert(0 <= i and i < w);
+  assert(0 <= j and j < maxLength);
+  return to_string(j*w + i + k*w*maxLength + 1) + "  ";
 }
 
 void add_clause(const clause& c) {
@@ -53,9 +53,12 @@ void add_amo(const vector<literal>& z) {
 }
 
 void write_CNF() {
-
   n_vars = w*maxLength*boxes.size();
-
+  vector<literal> rotVars(boxes.size());
+  for(int i = 1; i <= boxes.size(); i++) {
+    rotVars[i-1] = to_string(w*maxLength*boxes.size() + i);
+  }
+  n_vars += boxes.size();
   // Put the first box in the highest top-left coordinate in the paper.
   add_clause(tl(0,0,0));
   for(int i = 0; i < w; i++) {
@@ -70,10 +73,6 @@ void write_CNF() {
     clause c;
     for(int i = 0; i < w; i++) {
       for(int j = 0; j < maxLength; j++) {
-	// Boxes can not fall out of the paper.
-	if(i > w-boxes[b].first or j > maxLength-boxes[b].second)
-	  add_clause(-tl(i,j,b));
-	else
 	  c += tl(i,j,b);
       }
     }
@@ -85,28 +84,53 @@ void write_CNF() {
     vector<literal> z;
     for(int i = 0; i < w; i++) {
       for(int j = 0; j < maxLength; j++) {
-	// Boxes can not fall out of the paper.
-	if(i <= w-boxes[b].first or j <= maxLength-boxes[b].second)
 	  z.push_back(tl(i,j,b));
       }
     }
     add_amo(z);
   }
 
+  // Boxes can not fall out of the paper
+  for(int b = 0; b < boxes.size(); b++) {
+    for(int i = 0; i < w; i++) {
+      for(int j = 0; j < maxLength; j++) {
+	if(i > w-boxes[b].first or j > maxLength-boxes[b].second){
+	  add_clause(rotVars[b] + " " + -tl(i,j,b));
+	}
+	if(i > w-boxes[b].second or j > maxLength-boxes[b].first) {
+	  add_clause(-rotVars[b] + " " + -tl(i,j,b));
+	}
+      }
+    }
+  }
+
   // Boxes can not overlap
-  for(int b1 = 0; b1 < boxes.size()-1; b1++) {
+  for(int b1 = 0; b1 < boxes.size(); b1++) {
     for(int i = 0; i <= w-boxes[b1].first; i++) {
       for(int j = 0; j <= maxLength-boxes[b1].second; j++) {    
 	for(int k = i; k < i+boxes[b1].first; k++) {
 	  for(int l = j; l < j+boxes[b1].second; l++) {
-	    vector<literal> z;
-	    z.push_back(tl(i,j,b1));
 	    for(int b2 = 0; b2 < boxes.size(); b2++) {
 	      if(b1 != b2) {
-		z.push_back(tl(k,l,b2));
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2));//+ " " + rotVars[b1] + " ");
 	      }
 	    }
-	    add_amo(z);
+	  }
+	}
+      }
+    }
+  }
+
+  for(int b1 = 0; b1 < boxes.size(); b1++) {
+    for(int i = 0; i <= w-boxes[b1].second; i++) {
+      for(int j = 0; j <= maxLength-boxes[b1].first; j++) {    
+	for(int k = i; k < i+boxes[b1].second; k++) {
+	  for(int l = j; l < j+boxes[b1].first; l++) {
+	    for(int b2 = 0; b2 < boxes.size(); b2++) {
+	      if(b1 != b2) {
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " ");
+	      }
+	    }
 	  }
 	}
       }
@@ -115,31 +139,46 @@ void write_CNF() {
 }
 
 
-void get_solution(vector<pair<int,int> >& q) {
-  int lit;
+void get_solution(vector<pair<int,int> >& q, vector<bool>& rotated) {
+  int lit, i = 0;
   while(sol >> lit) {
-    if(lit > 0) {
+    if(lit > 0 and lit < w*maxLength*boxes.size()+1) {
       //cout << lit << " ";
       double x_tl = ((lit-1)%(maxLength*w)) % w;
-      double y_tl = ((lit-1)%(maxLength*w)) / maxLength;
+      double y_tl = (((lit-1)-(lit/(maxLength*w))*(maxLength*w))) / w;
+      //cout << "-> x_tl = " << x_tl << ", y_tl = " << y_tl << endl;
       q.push_back(make_pair(x_tl,y_tl));
     }
+    if(abs(lit) >= w*maxLength*boxes.size()+1) {
+      //cout << endl << "rot: " << lit;
+      if(lit > 0) {
+	rotated[i] = true;
+      }
+      ++i;
+    }
   }
-  cout << endl;
 }
 
 
-void write_solution(vector<pair<int,int> >& q) {
-  int max = 0;
+void write_solution(const vector<pair<int,int> >& q, const vector<bool>& rotated, int& length) {
+  length = 0;
   for(int i = 0; i < boxes.size(); i++) {
-    if(q[i].second > max) 
-      max = q[i].second;
+    int max = q[i].second;
+    if(rotated[i]) 
+      max += boxes[i].first;
+    else 
+      max += boxes[i].second;
+    if(length < max) {
+      length = max;
+    }
   }
-  cout << max+1 << endl;
+  cout << endl << length << endl;
   for(int i = 0; i < boxes.size(); i++) {
     int x_tl = q[i].first;
     int y_tl = q[i].second;    
-    cout << x_tl << " " << y_tl << "     " << x_tl+boxes[i].first-1 << " " << y_tl+boxes[i].second-1 << endl;
+    cout << x_tl << " " << y_tl << "     ";
+    if(rotated[i]) cout << x_tl+boxes[i].second-1 << " " << y_tl+boxes[i].first-1 << endl;
+    else cout << x_tl+boxes[i].first-1 << " "<< y_tl+boxes[i].second-1 << endl;
   }
 }
 
@@ -180,8 +219,6 @@ void readInput(char* argv) {
 int main(int argc, char** argv) {
   assert(argc == 2);
   readInput(argv[1]);
-  for(auto& b : boxes)
-    cout << b.first << "x" << b.second << endl;
   sort(boxes.begin(),boxes.end(),compareBoxes);
   cnf.open("tmp.rev");
   write_CNF();
@@ -189,23 +226,23 @@ int main(int argc, char** argv) {
   cnf.close();
   system("tac tmp.rev | ./lingeling | grep -E -v \"^c\" | tail --lines=+2 | cut --delimiter=' ' --field=1 --complement > tmp.out");
   vector<pair<int,int> > q;
+  vector<bool> rotated(boxes.size(),false);
+  int length;
   sol.open("tmp.out");
-  get_solution(q);
+  get_solution(q,rotated);
   sol.close();
-  write_solution(q);
+  //if(q.size()) write_solution(q,rotated,length);
   while(q.size()) {
-    write_solution(q);
+    write_solution(q,rotated,length);
     system("head -n -1 tmp.rev > temp.txt ; mv temp.txt tmp.rev");
     cnf.open("tmp.rev",ios_base::app);
-    int max = 0;
-    for(int i = 0; i < boxes.size(); i++) {
-      if(q[i].second > max) 
-	max = q[i].second;
-    }
     for(int b = 0; b < boxes.size(); b++) {
       clause c;
       for(int i = 0; i < w; i++) {
-	for(int j = max-boxes[b].second+1; j < maxLength; j++) {
+	int yCoord = boxes[b].second;
+	if(rotated[b])
+	  yCoord = boxes[b].first;
+	for(int j = length-yCoord; j < maxLength; j++) {
 	  add_clause(-tl(i,j,b));
 	}
       }
@@ -214,8 +251,9 @@ int main(int argc, char** argv) {
     cnf.close();
     system("tac tmp.rev | ./lingeling | grep -E -v \"^c\" | tail --lines=+2 | cut --delimiter=' ' --field=1 --complement > tmp.out");
     q = vector<pair<int,int> >();
+    rotated = vector<bool>(boxes.size(),false);
     sol.open("tmp.out");
-    get_solution(q);
+    get_solution(q,rotated);
     sol.close();
   }
 }
