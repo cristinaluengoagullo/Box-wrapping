@@ -108,11 +108,36 @@ void write_CNF() {
   for(int b1 = 0; b1 < boxes.size(); b1++) {
     for(int i = 0; i <= w-boxes[b1].first; i++) {
       for(int j = 0; j <= maxLength-boxes[b1].second; j++) {    
-	for(int k = i; k < i+boxes[b1].first; k++) {
-	  for(int l = j; l < j+boxes[b1].second; l++) {
-	    for(int b2 = 0; b2 < boxes.size(); b2++) {
+	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  int start1 = i-boxes[b2].first+1;
+	  if(start1 < 0) start1 = 0;
+	  int finish1 = i+boxes[b1].first;
+	  if(finish1 > w) finish1 = w;
+	  for(int k = start1; k < finish1; k++) {
+	    int start2 = j-boxes[b2].second+1;
+	    if(start2 < 0) start2 = 0;
+	    int finish2 = j+boxes[b1].second;
+	    if(finish2 > maxLength) finish2 = maxLength;
+	    for(int l = start2; l < finish2; l++) {
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2));//+ " " + rotVars[b1] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rotVars[b1] + " " + rotVars[b2] + " ");
+	      }
+	    }
+	  }
+	}
+	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  int start1 = i-boxes[b2].second+1;
+	  if(start1 < 0) start1 = 0;
+	  int finish1 = i+boxes[b1].first;
+	  if(finish1 > w) finish1 = w;
+	  for(int k = start1; k < finish1; k++) {
+	    int start2 = j-boxes[b2].first+1;
+	    if(start2 < 0) start2 = 0;
+	    int finish2 = j+boxes[b1].second;
+	    if(finish2 > maxLength) finish2 = maxLength;
+	    for(int l = start2; l < finish2; l++) {
+	      if(b1 != b2) {
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rotVars[b1] + " " + -rotVars[b2] + " ");
 	      }
 	    }
 	  }
@@ -124,11 +149,36 @@ void write_CNF() {
   for(int b1 = 0; b1 < boxes.size(); b1++) {
     for(int i = 0; i <= w-boxes[b1].second; i++) {
       for(int j = 0; j <= maxLength-boxes[b1].first; j++) {    
-	for(int k = i; k < i+boxes[b1].second; k++) {
-	  for(int l = j; l < j+boxes[b1].first; l++) {
-	    for(int b2 = 0; b2 < boxes.size(); b2++) {
+	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  int start1 = i-boxes[b2].first+1;
+	  if(start1 < 0) start1 = 0;
+	  int finish1 = i+boxes[b1].first;
+	  if(finish1 > w) finish1 = w;
+	  for(int k = start1; k < finish1; k++) {
+	    int start2 = j-boxes[b2].second+1;
+	    if(start2 < 0) start2 = 0;
+	    int finish2 = j+boxes[b1].second;
+	    if(finish2 > maxLength) finish2 = maxLength;
+	    for(int l = start2; l < finish2; l++) {
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " " + rotVars[b2] + " ");
+	      }
+	    }
+	  }
+	}
+	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  int start1 = i-boxes[b2].second+1;
+	  if(start1 < 0) start1 = 0;
+	  int finish1 = i+boxes[b1].first;
+	  if(finish1 > w) finish1 = w;
+	  for(int k = start1; k < finish1; k++) {
+	    int start2 = j-boxes[b2].first+1;
+	    if(start2 < 0) start2 = 0;
+	    int finish2 = j+boxes[b1].second;
+	    if(finish2 > maxLength) finish2 = maxLength;
+	    for(int l = start2; l < finish2; l++) {
+	      if(b1 != b2) {
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " " + -rotVars[b2] + " ");
 	      }
 	    }
 	  }
