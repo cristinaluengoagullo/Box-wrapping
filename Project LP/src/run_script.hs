@@ -1,8 +1,8 @@
 #!/bin/bash
 
 TIME_LIMIT=120 # In secs.
-BENCH_DIR=../instances
-CHECKER=../checker
+BENCH_DIR=../../instances
+CHECKER=./../../checker
 EXE=./boxwrapping
 
 for ifile in $BENCH_DIR/*.in; do
