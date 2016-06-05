@@ -11,17 +11,18 @@
 
 using namespace std;
 
+typedef string literal;
+typedef string  clause;
+
 int w;
 int maxLength;
 vector<pair<int,int> > boxes;
+vector<literal> rotVars;
 int n_vars;
 int n_clauses;
 
 ofstream cnf;
 ifstream sol;
-
-typedef string literal;
-typedef string  clause;
 
 bool compareBoxes(const pair<int,int>& b1, const pair<int,int>& b2) {
   return (b1.first*b1.second) > (b2.first*b2.second);
@@ -54,7 +55,7 @@ void add_amo(const vector<literal>& z) {
 
 void write_CNF() {
   n_vars = w*maxLength*boxes.size();
-  vector<literal> rotVars(boxes.size());
+  rotVars = vector<literal>(boxes.size());
   for(int i = 1; i <= boxes.size(); i++) {
     rotVars[i-1] = to_string(w*maxLength*boxes.size() + i);
   }
@@ -287,7 +288,7 @@ int main(int argc, char** argv) {
     vector<pair<int,int> > currentSol = q;
     vector<bool> currentRot = rotated;
     int currentLength = length;
-    write_solution(q,rotated,length);
+    //write_solution(q,rotated,length);
     system("head -n -1 tmp.rev > temp.txt ; mv temp.txt tmp.rev");
     cnf.open("tmp.rev",ios_base::app);
     for(int b = 0; b < boxes.size(); b++) {
@@ -296,7 +297,12 @@ int main(int argc, char** argv) {
 	int yCoord = boxes[b].second;
 	if(rotated[b])
 	  yCoord = boxes[b].first;
-	for(int j = length-yCoord; j < maxLength; j++) {
+	int start = length-yCoord;
+	if(not start) {
+	  add_clause(rotVars[b] + " ");
+	  start = 1;
+	}
+	for(int j = start; j < maxLength; j++) {
 	  add_clause(-tl(i,j,b));
 	}
       }
@@ -309,6 +315,10 @@ int main(int argc, char** argv) {
     sol.open("tmp.out");
     get_solution(q,rotated,length);
     sol.close();
-    //if(q.empty()) write_solution(currentSol,currentRot,currentLength);
+    if(length == 1) {
+      write_solution(q,rotated,length);
+      break;
+    }
+    if(q.empty()) write_solution(currentSol,currentRot,currentLength);
   }
 }
