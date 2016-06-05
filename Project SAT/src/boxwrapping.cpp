@@ -93,13 +93,21 @@ void write_CNF() {
 
   // Boxes can not fall out of the paper
   for(int b = 0; b < boxes.size(); b++) {
+    if(boxes[b].first == boxes[b].second) 
+      add_clause(-rotVars[b] + " ");
     for(int i = 0; i < w; i++) {
       for(int j = 0; j < maxLength; j++) {
-	if(i > w-boxes[b].first or j > maxLength-boxes[b].second){
-	  add_clause(rotVars[b] + " " + -tl(i,j,b));
+	if(boxes[b].first != boxes[b].second) {
+	  if(i > w-boxes[b].first or j > maxLength-boxes[b].second){
+	    add_clause(rotVars[b] + " " + -tl(i,j,b));
+	  }
+	  if(i > w-boxes[b].second or j > maxLength-boxes[b].first) {
+	    add_clause(-rotVars[b] + " " + -tl(i,j,b));
+	  }
 	}
-	if(i > w-boxes[b].second or j > maxLength-boxes[b].first) {
-	  add_clause(-rotVars[b] + " " + -tl(i,j,b));
+	else {
+	  if(i > w-boxes[b].first or j > maxLength-boxes[b].second)
+	    add_clause(-tl(i,j,b));
 	}
       }
     }

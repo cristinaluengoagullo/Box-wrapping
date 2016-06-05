@@ -1,17 +1,17 @@
 #!/bin/bash
 
-TIME_LIMIT=120 # In secs.
+TIME_LIMIT=5 # In secs.
 BENCH_DIR=../../instances
 EXE=./boxwrapping
 CHECKER=./../../checker
 
-ulimit -t $TIME_LIMIT
+#ulimit -t 5
 
 for ifile in $BENCH_DIR/*.in; do
     ofile=$(basename $ifile .in)_CP.out
     echo ""
     echo "------ File $ifile ------"
-    /usr/bin/time -f "%e" $EXE $ifile > ../out/$ofile
+    timeout 120 /usr/bin/time -f "%e" $EXE $ifile > ../out/$ofile
     if [ $? != 0 ]; then
 	echo "Timed out!"
     else
