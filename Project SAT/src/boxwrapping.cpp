@@ -292,18 +292,39 @@ int main(int argc, char** argv) {
     system("head -n -1 tmp.rev > temp.txt ; mv temp.txt tmp.rev");
     cnf.open("tmp.rev",ios_base::app);
     for(int b = 0; b < boxes.size(); b++) {
-      clause c;
       for(int i = 0; i < w; i++) {
-	int yCoord = boxes[b].second;
-	if(rotated[b])
-	  yCoord = boxes[b].first;
-	int start = length-yCoord;
-	if(not start) {
-	  add_clause(rotVars[b] + " ");
-	  start = 1;
+	int yCoord1 = boxes[b].second;
+	int yCoord2 = boxes[b].first;
+	if(yCoord1 == yCoord2) {
+	  for(int j = length-yCoord1; j < maxLength; j++) {
+	    add_clause(-tl(i,j,b));
+	  }
 	}
-	for(int j = start; j < maxLength; j++) {
-	  add_clause(-tl(i,j,b));
+	else {
+	  if(rotated[b]) {
+	    yCoord1 = boxes[b].first;
+	    yCoord2 = boxes[b].second;
+	  }
+	  int start = length-yCoord1;
+	  if(start >= 0) {
+	    if(not start) {
+	      start = 1;
+	      add_clause(rotVars[b] + " ");
+	    }
+	    for(int j = start; j < maxLength; j++) {
+	      add_clause(rotVars[b] + " " + -tl(i,j,b));
+	    }
+	  }
+	  start = length-yCoord2;
+	  if(start >= 0) {
+	    if(not start) {
+	      start = 1;
+	      add_clause(rotVars[b] + " ");
+	    }
+	    for(int j = start; j < maxLength; j++) {
+	      add_clause(-rotVars[b] + " " + -tl(i,j,b));
+	    }
+	  }
 	}
       }
     }
