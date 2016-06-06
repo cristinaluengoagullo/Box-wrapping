@@ -80,7 +80,7 @@ void write_CNF() {
     add_clause(c);
   }
 
-  // At most one top-left coordinate for each box
+  // At most one top-left coordinate for each box.
   for(int b = 1; b < boxes.size(); b++) {
     vector<literal> z;
     for(int i = 0; i < w; i++) {
@@ -93,6 +93,7 @@ void write_CNF() {
 
   // Boxes can not fall out of the paper
   for(int b = 0; b < boxes.size(); b++) {
+    // If boxes have the same width and height, we do not rotate them.
     if(boxes[b].first == boxes[b].second) 
       add_clause(-rotVars[b] + " ");
     for(int i = 0; i < w; i++) {
@@ -113,11 +114,33 @@ void write_CNF() {
     }
   }
 
+  for(int b = 0; b < boxes.size(); b++) {
+    if(b > 0) {
+      if(boxes[b-1].first == boxes[b].first and boxes[b-1].second == boxes[b].second) {
+	for(int i = 0; i < w; i++) {
+	  for(int j = 0; j < maxLength; j++) {
+	    for(int k = 0; k <= i; k++) {
+	      for(int l = 0; l <= j; l++) {
+		add_clause(-tl(i,j,b-1) + " " + -tl(k,l,b));
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+
   // Boxes can not overlap
   for(int b1 = 0; b1 < boxes.size(); b1++) {
+    literal rot1 = rotVars[b1];
+    if(boxes[b1].first == boxes[b1].second)
+      rot1 = "";
     for(int i = 0; i <= w-boxes[b1].first; i++) {
       for(int j = 0; j <= maxLength-boxes[b1].second; j++) {    
 	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  literal rot2 = rotVars[b2];
+	  if(boxes[b2].first == boxes[b2].second)
+	    rot2 = "";
 	  int start1 = i-boxes[b2].first+1;
 	  if(start1 < 0) start1 = 0;
 	  int finish1 = i+boxes[b1].first;
@@ -127,14 +150,17 @@ void write_CNF() {
 	    if(start2 < 0) start2 = 0;
 	    int finish2 = j+boxes[b1].second;
 	    if(finish2 > maxLength) finish2 = maxLength;
-	    for(int l = start2; l < finish2; l++) {
+	    for(int l = start2; l < finish2; l++) { 
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rotVars[b1] + " " + rotVars[b2] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	      }
 	    }
 	  }
 	}
 	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  literal rot2 = -rotVars[b2];
+	  if(boxes[b2].first == boxes[b2].second)
+	    rot2 = "";
 	  int start1 = i-boxes[b2].second+1;
 	  if(start1 < 0) start1 = 0;
 	  int finish1 = i+boxes[b1].first;
@@ -146,7 +172,7 @@ void write_CNF() {
 	    if(finish2 > maxLength) finish2 = maxLength;
 	    for(int l = start2; l < finish2; l++) {
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rotVars[b1] + " " + -rotVars[b2] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	      }
 	    }
 	  }
@@ -156,9 +182,15 @@ void write_CNF() {
   }
 
   for(int b1 = 0; b1 < boxes.size(); b1++) {
+    literal rot1 = -rotVars[b1];
+    if(boxes[b1].first == boxes[b1].second)
+      rot1 = "";
     for(int i = 0; i <= w-boxes[b1].second; i++) {
       for(int j = 0; j <= maxLength-boxes[b1].first; j++) {    
 	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  literal rot2 = rotVars[b2];
+	  if(boxes[b2].first == boxes[b2].second)
+	    rot2 = "";
 	  int start1 = i-boxes[b2].first+1;
 	  if(start1 < 0) start1 = 0;
 	  int finish1 = i+boxes[b1].first;
@@ -170,12 +202,15 @@ void write_CNF() {
 	    if(finish2 > maxLength) finish2 = maxLength;
 	    for(int l = start2; l < finish2; l++) {
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " " + rotVars[b2] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	      }
 	    }
 	  }
 	}
 	for(int b2 = 0; b2 < boxes.size(); b2++) {
+	  literal rot2 = -rotVars[b2];
+	  if(boxes[b2].first == boxes[b2].second)
+	    rot2 = "";
 	  int start1 = i-boxes[b2].second+1;
 	  if(start1 < 0) start1 = 0;
 	  int finish1 = i+boxes[b1].first;
@@ -187,7 +222,7 @@ void write_CNF() {
 	    if(finish2 > maxLength) finish2 = maxLength;
 	    for(int l = start2; l < finish2; l++) {
 	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + -rotVars[b1] + " " + -rotVars[b2] + " ");
+		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	      }
 	    }
 	  }
