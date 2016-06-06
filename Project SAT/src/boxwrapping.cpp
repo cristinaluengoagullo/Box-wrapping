@@ -119,8 +119,8 @@ void write_CNF() {
       if(boxes[b-1].first == boxes[b].first and boxes[b-1].second == boxes[b].second) {
 	for(int i = 0; i < w; i++) {
 	  for(int j = 0; j < maxLength; j++) {
-	    for(int k = 0; k <= i; k++) {
-	      for(int l = 0; l <= j; l++) {
+	    for(int k = 0; k < i; k++) {
+	      for(int l = 0; l < j; l++) {
 		add_clause(-tl(i,j,b-1) + " " + -tl(k,l,b));
 	      }
 	    }
