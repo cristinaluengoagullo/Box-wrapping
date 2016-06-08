@@ -45,12 +45,32 @@ void add_clause(const clause& c) {
   ++n_clauses;
 }
 
+string decToBin(int number) {
+  if(number == 0) return "0";
+  if(number == 1) return "1";
+  if(number % 2 == 0)
+    return decToBin(number/2) + "0";
+  else
+    return decToBin(number/2) + "1";
+}
 
+// log encoding for AMO constraint
 void add_amo(const vector<literal>& z) {
   int N = z.size();
-  for (int i1 = 0; i1 < N; ++i1)
-    for (int i2 = i1+1; i2 < N; ++i2)
-      add_clause(-z[i1] V -z[i2]);
+  string nbin = decToBin(N);
+  int max = n_vars;
+  n_vars += log2(N);
+  if(nbin.size() < ceil(log2(N))) {
+    for(int k = nbin.size(); k < ceil(log2(N)); k++)
+      nbin = "0" + nbin;
+  }
+  for(int i = 0; i < N; i++) {
+    for(int j = max+1; j <= n_vars; j++) {
+      if(nbin[j-max-1] == '0') 
+	add_clause(-z[i] + " " + -to_string(j) + " ");
+      else add_clause(-z[i] + " " + to_string(j) + " ");
+    }
+  }
 }
 
 void add_no_overlap(int b1, int width, int height, literal rot1) {
@@ -183,10 +203,12 @@ void write_CNF() {
     literal rot1 = rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
       rot1 = "";
+    // No overlapping if the box is not rotated.
     add_no_overlap(b1,boxes[b1].first,boxes[b1].second,rot1);
     rot1 = -rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
       rot1 = "";
+    // No overlapping if the box is rotated.
     add_no_overlap(b1,boxes[b1].second,boxes[b1].first,rot1);    
   }
 }
