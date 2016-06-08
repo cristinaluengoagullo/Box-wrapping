@@ -53,6 +53,53 @@ void add_amo(const vector<literal>& z) {
       add_clause(-z[i1] V -z[i2]);
 }
 
+void add_no_overlap(int b1, int width, int height, literal rot1) {
+  for(int i = 0; i <= w-width; i++) {
+    for(int j = 0; j <= maxLength-height; j++) {    
+      for(int b2 = 0; b2 < boxes.size(); b2++) {
+	literal rot2 = rotVars[b2];
+	if(boxes[b2].first == boxes[b2].second)
+	  rot2 = "";
+	int start1 = i-boxes[b2].first+1;
+	if(start1 < 0) start1 = 0;
+	int finish1 = i+width;
+	if(finish1 > w) finish1 = w;
+	for(int k = start1; k < finish1; k++) {
+	  int start2 = j-boxes[b2].second+1;
+	  if(start2 < 0) start2 = 0;
+	  int finish2 = j+height;
+	  if(finish2 > maxLength) finish2 = maxLength;
+	  for(int l = start2; l < finish2; l++) { 
+	    if(b1 != b2) {
+	      add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
+	    }
+	  }
+	}
+      }
+      for(int b2 = 0; b2 < boxes.size(); b2++) {
+	literal rot2 = -rotVars[b2];
+	if(boxes[b2].first == boxes[b2].second)
+	  rot2 = "";
+	int start1 = i-boxes[b2].second+1;
+	if(start1 < 0) start1 = 0;
+	int finish1 = i+width;
+	if(finish1 > w) finish1 = w;
+	for(int k = start1; k < finish1; k++) {
+	  int start2 = j-boxes[b2].first+1;
+	  if(start2 < 0) start2 = 0;
+	  int finish2 = j+height;
+	  if(finish2 > maxLength) finish2 = maxLength;
+	  for(int l = start2; l < finish2; l++) {
+	    if(b1 != b2) {
+	      add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
 void write_CNF() {
   n_vars = w*maxLength*boxes.size();
   rotVars = vector<literal>(boxes.size());
@@ -114,6 +161,7 @@ void write_CNF() {
     }
   }
 
+  // Boxes that have the same dimensions limit the coordinates of subsequent boxes.
   for(int b = 0; b < boxes.size(); b++) {
     if(b > 0) {
       if(boxes[b-1].first == boxes[b].first and boxes[b-1].second == boxes[b].second) {
@@ -135,100 +183,11 @@ void write_CNF() {
     literal rot1 = rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
       rot1 = "";
-    for(int i = 0; i <= w-boxes[b1].first; i++) {
-      for(int j = 0; j <= maxLength-boxes[b1].second; j++) {    
-	for(int b2 = 0; b2 < boxes.size(); b2++) {
-	  literal rot2 = rotVars[b2];
-	  if(boxes[b2].first == boxes[b2].second)
-	    rot2 = "";
-	  int start1 = i-boxes[b2].first+1;
-	  if(start1 < 0) start1 = 0;
-	  int finish1 = i+boxes[b1].first;
-	  if(finish1 > w) finish1 = w;
-	  for(int k = start1; k < finish1; k++) {
-	    int start2 = j-boxes[b2].second+1;
-	    if(start2 < 0) start2 = 0;
-	    int finish2 = j+boxes[b1].second;
-	    if(finish2 > maxLength) finish2 = maxLength;
-	    for(int l = start2; l < finish2; l++) { 
-	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	      }
-	    }
-	  }
-	}
-	for(int b2 = 0; b2 < boxes.size(); b2++) {
-	  literal rot2 = -rotVars[b2];
-	  if(boxes[b2].first == boxes[b2].second)
-	    rot2 = "";
-	  int start1 = i-boxes[b2].second+1;
-	  if(start1 < 0) start1 = 0;
-	  int finish1 = i+boxes[b1].first;
-	  if(finish1 > w) finish1 = w;
-	  for(int k = start1; k < finish1; k++) {
-	    int start2 = j-boxes[b2].first+1;
-	    if(start2 < 0) start2 = 0;
-	    int finish2 = j+boxes[b1].second;
-	    if(finish2 > maxLength) finish2 = maxLength;
-	    for(int l = start2; l < finish2; l++) {
-	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-
-  for(int b1 = 0; b1 < boxes.size(); b1++) {
-    literal rot1 = -rotVars[b1];
+    add_no_overlap(b1,boxes[b1].first,boxes[b1].second,rot1);
+    rot1 = -rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
       rot1 = "";
-    for(int i = 0; i <= w-boxes[b1].second; i++) {
-      for(int j = 0; j <= maxLength-boxes[b1].first; j++) {    
-	for(int b2 = 0; b2 < boxes.size(); b2++) {
-	  literal rot2 = rotVars[b2];
-	  if(boxes[b2].first == boxes[b2].second)
-	    rot2 = "";
-	  int start1 = i-boxes[b2].first+1;
-	  if(start1 < 0) start1 = 0;
-	  int finish1 = i+boxes[b1].first;
-	  if(finish1 > w) finish1 = w;
-	  for(int k = start1; k < finish1; k++) {
-	    int start2 = j-boxes[b2].second+1;
-	    if(start2 < 0) start2 = 0;
-	    int finish2 = j+boxes[b1].second;
-	    if(finish2 > maxLength) finish2 = maxLength;
-	    for(int l = start2; l < finish2; l++) {
-	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	      }
-	    }
-	  }
-	}
-	for(int b2 = 0; b2 < boxes.size(); b2++) {
-	  literal rot2 = -rotVars[b2];
-	  if(boxes[b2].first == boxes[b2].second)
-	    rot2 = "";
-	  int start1 = i-boxes[b2].second+1;
-	  if(start1 < 0) start1 = 0;
-	  int finish1 = i+boxes[b1].first;
-	  if(finish1 > w) finish1 = w;
-	  for(int k = start1; k < finish1; k++) {
-	    int start2 = j-boxes[b2].first+1;
-	    if(start2 < 0) start2 = 0;
-	    int finish2 = j+boxes[b1].second;
-	    if(finish2 > maxLength) finish2 = maxLength;
-	    for(int l = start2; l < finish2; l++) {
-	      if(b1 != b2) {
-		add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	      }
-	    }
-	  }
-	}
-      }
-    }
+    add_no_overlap(b1,boxes[b1].second,boxes[b1].first,rot1);    
   }
 }
 
