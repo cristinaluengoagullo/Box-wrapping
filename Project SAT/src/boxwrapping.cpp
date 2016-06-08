@@ -76,7 +76,7 @@ void add_amo(const vector<literal>& z) {
 void add_no_overlap(int b1, int width, int height, literal rot1) {
   for(int i = 0; i <= w-width; i++) {
     for(int j = 0; j <= maxLength-height; j++) {    
-      for(int b2 = 0; b2 < boxes.size(); b2++) {
+      for(int b2 = b1+1; b2 < boxes.size(); b2++) {
 	literal rot2 = rotVars[b2];
 	if(boxes[b2].first == boxes[b2].second)
 	  rot2 = "";
@@ -96,7 +96,7 @@ void add_no_overlap(int b1, int width, int height, literal rot1) {
 	  }
 	}
       }
-      for(int b2 = 0; b2 < boxes.size(); b2++) {
+      for(int b2 = b1+1; b2 < boxes.size(); b2++) {
 	literal rot2 = -rotVars[b2];
 	if(boxes[b2].first == boxes[b2].second)
 	  rot2 = "";
@@ -182,7 +182,7 @@ void write_CNF() {
   }
 
   // Boxes that have the same dimensions limit the coordinates of subsequent boxes.
-  for(int b = 0; b < boxes.size(); b++) {
+  /*for(int b = 0; b < boxes.size(); b++) {
     if(b > 0) {
       if(boxes[b-1].first == boxes[b].first and boxes[b-1].second == boxes[b].second) {
 	for(int i = 0; i < w; i++) {
@@ -196,20 +196,20 @@ void write_CNF() {
 	}
       }
     }
-  }
+    }*/
 
   // Boxes can not overlap
   for(int b1 = 0; b1 < boxes.size(); b1++) {
-    literal rot1 = rotVars[b1];
+    literal rot = rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
-      rot1 = "";
+      rot = "";
     // No overlapping if the box is not rotated.
-    add_no_overlap(b1,boxes[b1].first,boxes[b1].second,rot1);
-    rot1 = -rotVars[b1];
+    add_no_overlap(b1,boxes[b1].first,boxes[b1].second,rot);
+    rot = -rotVars[b1];
     if(boxes[b1].first == boxes[b1].second)
-      rot1 = "";
+      rot = "";
     // No overlapping if the box is rotated.
-    add_no_overlap(b1,boxes[b1].second,boxes[b1].first,rot1);    
+    add_no_overlap(b1,boxes[b1].second,boxes[b1].first,rot);    
   }
 }
 
@@ -218,14 +218,11 @@ void get_solution(vector<pair<int,int> >& q, vector<bool>& rotated, int& length)
   int lit, i = 0;
   while(sol >> lit) {
     if(lit > 0 and lit < w*maxLength*boxes.size()+1) {
-      //cout << lit << " ";
       double x_tl = ((lit-1)%(maxLength*w)) % w;
       double y_tl = (((lit-1)-(lit/(maxLength*w))*(maxLength*w))) / w;
-      //cout << "-> x_tl = " << x_tl << ", y_tl = " << y_tl << endl;
       q.push_back(make_pair(x_tl,y_tl));
     }
     if(abs(lit) >= w*maxLength*boxes.size()+1) {
-      //cout << endl << "rot: " << lit;
       if(lit > 0) {
 	rotated[i] = true;
       }
