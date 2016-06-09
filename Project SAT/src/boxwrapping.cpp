@@ -54,7 +54,7 @@ string decToBin(int number) {
     return decToBin(number/2) + "1";
 }
 
-// log encoding for AMO constraint
+// logarithmic encoding for AMO constraint
 void add_amo(const vector<literal>& z) {
   int N = z.size();
   string nbin = decToBin(N);
@@ -76,6 +76,7 @@ void add_amo(const vector<literal>& z) {
 void add_no_overlap(int b1, int width, int height, literal rot1) {
   for(int i = 0; i <= w-width; i++) {
     for(int j = 0; j <= maxLength-height; j++) {    
+      // No overlap when b2 is not rotated
       for(int b2 = b1+1; b2 < boxes.size(); b2++) {
 	literal rot2 = rotVars[b2];
 	if(boxes[b2].first == boxes[b2].second)
@@ -85,17 +86,16 @@ void add_no_overlap(int b1, int width, int height, literal rot1) {
 	int finish1 = i+width;
 	if(finish1 > w) finish1 = w;
 	for(int k = start1; k < finish1; k++) {
-	  int start2 = j-boxes[b2].second+1;
+	  int start2 = j-boxes[b2].second;
 	  if(start2 < 0) start2 = 0;
 	  int finish2 = j+height;
 	  if(finish2 > maxLength) finish2 = maxLength;
 	  for(int l = start2; l < finish2; l++) { 
-	    if(b1 != b2) {
-	      add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	    }
+	    add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	  }
 	}
       }
+      // No overlap when b2 is rotated
       for(int b2 = b1+1; b2 < boxes.size(); b2++) {
 	literal rot2 = -rotVars[b2];
 	if(boxes[b2].first == boxes[b2].second)
@@ -105,14 +105,12 @@ void add_no_overlap(int b1, int width, int height, literal rot1) {
 	int finish1 = i+width;
 	if(finish1 > w) finish1 = w;
 	for(int k = start1; k < finish1; k++) {
-	  int start2 = j-boxes[b2].first+1;
+	  int start2 = j-boxes[b2].first;
 	  if(start2 < 0) start2 = 0;
 	  int finish2 = j+height;
 	  if(finish2 > maxLength) finish2 = maxLength;
 	  for(int l = start2; l < finish2; l++) {
-	    if(b1 != b2) {
-	      add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
-	    }
+	    add_clause(-tl(i,j,b1) + " " + -tl(k,l,b2) + " " + rot1 + " " + rot2 + " ");
 	  }
 	}
       }
@@ -133,6 +131,17 @@ void write_CNF() {
     for(int j = 0; j < maxLength; j++) {
       if(i or j)
 	add_clause(-tl(i,j,0));
+    }
+  }
+
+  // All the other boxes can not have their top-left coordinate inside
+  // the area that the first box defines.
+  for(int b = 1; b < boxes.size(); b++) {
+    // We limit the smallest area so we do not consider rotation.
+    for(int i = 0; i < min(boxes[0].first,boxes[0].second); i++) {
+      for(int j = 0; j < min(boxes[0].first,boxes[0].second); j++) {
+	add_clause(-tl(i,j,b));
+      }
     }
   }
 
@@ -180,23 +189,6 @@ void write_CNF() {
       }
     }
   }
-
-  // Boxes that have the same dimensions limit the coordinates of subsequent boxes.
-  /*for(int b = 0; b < boxes.size(); b++) {
-    if(b > 0) {
-      if(boxes[b-1].first == boxes[b].first and boxes[b-1].second == boxes[b].second) {
-	for(int i = 0; i < w; i++) {
-	  for(int j = 0; j < maxLength; j++) {
-	    for(int k = 0; k < i; k++) {
-	      for(int l = 0; l < j; l++) {
-		add_clause(-tl(i,j,b-1) + " " + -tl(k,l,b));
-	      }
-	    }
-	  }
-	}
-      }
-    }
-    }*/
 
   // Boxes can not overlap
   for(int b1 = 0; b1 < boxes.size(); b1++) {
